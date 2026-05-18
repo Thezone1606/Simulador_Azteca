@@ -287,6 +287,7 @@ function tirarDado() {
     if (nombreCasilla === "Beneficio") {
         msgVoz += `¡Felicidades, caíste en un Beneficio! El banco te regala 1000 pesos. Tu saldo es ${j.dinero} pesos.`;
         btnComprar.disabled = true;
+        btnVender.disabled = false;
         btnRepetir.disabled = false;
         btnInventario.disabled = (j.propiedades.length === 0);
         hablar(msgVoz, false, () => {
@@ -299,6 +300,7 @@ function tirarDado() {
             agregarRegistro(`¡El jugador ${j.id} se ha quedado sin dinero!`);
         }
         btnComprar.disabled = true;
+        btnVender.disabled = false;
         btnRepetir.disabled = false;
         btnInventario.disabled = (j.propiedades.length === 0);
         hablar(msgVoz, false, () => {
