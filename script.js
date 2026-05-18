@@ -1,4 +1,5 @@
 // script.js
+(() => { // Encapsulamiento IIFE para evitar trampas desde la consola
 const estadosRepublica = [
     "Aguascalientes", "Baja California", "Baja California Sur", "Campeche", "Chiapas", 
     "Chihuahua", "Coahuila", "Colima", "Ciudad de México", "Durango", "Guanajuato", 
@@ -51,7 +52,7 @@ function iniciarJuego() {
     document.getElementById('juego').style.display = 'block';
     
     actualizarInterfaz();
-    registro.innerHTML = '<strong>Registro de jugadas:</strong><br><span>El juego ha comenzado. Todos los jugadores están en la Meta.</span><br>';
+    reiniciarRegistro('El juego ha comenzado. Todos los jugadores están en la Meta.');
     hablar("El juego ha comenzado. Todos los jugadores están en la Meta.");
 }
 
@@ -63,7 +64,7 @@ function actualizarInterfaz() {
     btnVender.disabled = true;
     btnRepetir.disabled = true;
     btnInventario.disabled = (j.propiedades.length === 0);
-    resultadoDado.innerHTML = "🎲";
+    resultadoDado.textContent = "🎲"; // Uso seguro de textContent en lugar de innerHTML
 }
 
 function hablar(texto, cancelarAnterior = true, callbackEnd = null) {
@@ -133,7 +134,7 @@ function ejecutarReinicio(tipo) {
     if (tipo === 'config') {
         document.getElementById('juego').style.display = 'none';
         document.getElementById('configuracion').style.display = 'block';
-        registro.innerHTML = '<strong>Registro de jugadas:</strong><br>';
+        reiniciarRegistro();
         hablar("Volviendo a la pantalla de configuración.");
     } else if (tipo === 'mismos') {
         for(let i=0; i<numJugadores; i++) {
@@ -146,13 +147,30 @@ function ejecutarReinicio(tipo) {
         jugadorActualIndex = 0;
         yaTiro = false;
         actualizarInterfaz();
-        registro.innerHTML = '<strong>Registro de jugadas:</strong><br><span>El juego ha sido reiniciado. Todos vuelven a la Meta.</span><br>';
+        reiniciarRegistro('El juego ha sido reiniciado. Todos vuelven a la Meta.');
         hablar("El juego ha sido reiniciado desde cero. Todos vuelven a la Meta.");
     }
 }
 
+function reiniciarRegistro(mensajeInicial = null) {
+    registro.innerHTML = '';
+    const strong = document.createElement('strong');
+    strong.textContent = 'Registro de jugadas:';
+    registro.appendChild(strong);
+    registro.appendChild(document.createElement('br'));
+    if (mensajeInicial) {
+        const span = document.createElement('span');
+        span.textContent = mensajeInicial;
+        registro.appendChild(span);
+        registro.appendChild(document.createElement('br'));
+    }
+}
+
 function agregarRegistro(mensaje) {
-    registro.innerHTML += `<span>- ${mensaje}</span><br>`;
+    const span = document.createElement('span');
+    span.textContent = "- " + mensaje;
+    registro.appendChild(span);
+    registro.appendChild(document.createElement('br'));
     registro.scrollTop = registro.scrollHeight; // Auto-scroll
 }
 
@@ -186,7 +204,7 @@ function tirarDado() {
     const nombreCasilla = casillas[j.posicion];
     const costo = costoCasilla(j.posicion);
 
-    resultadoDado.innerHTML = carasDado[avance - 1];
+    resultadoDado.textContent = carasDado[avance - 1]; // Uso seguro de textContent
     
     let mensaje = `Jugador ${j.id} tiró un ${avance}. Avanza a ${nombreCasilla}.`;
     if (pasoMeta) mensaje += ` Pasó por la Meta y cobró $2000.`;
@@ -364,3 +382,12 @@ function finalizarTurno() {
     agregarRegistro(`--- Inicia el turno del Jugador ${jugadores[jugadorActualIndex].id} ---`);
     actualizarInterfaz();
 }
+
+// Exponer funciones globales para que funcionen con los botones del HTML
+window.iniciarJuego = iniciarJuego;
+window.accionBoton = accionBoton;
+window.mostrarReglas = mostrarReglas;
+window.ejecutarReinicio = ejecutarReinicio;
+window.ocultarModalReinicio = ocultarModalReinicio;
+
+})(); // Fin del IIFE
