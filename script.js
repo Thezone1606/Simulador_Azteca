@@ -1,13 +1,25 @@
 // script.js
 (() => { // Encapsulamiento IIFE para evitar trampas desde la consola
 const estadosRepublica = [
-    "Aguascalientes", "Baja California", "Baja California Sur", "Campeche", "Chiapas", 
-    "Chihuahua", "Coahuila", "Colima", "Ciudad de México", "Durango", "Guanajuato", 
-    "Guerrero", "Hidalgo", "Jalisco", "Estado de México", "Michoacán", "Morelos", 
-    "Nayarit", "Nuevo León", "Oaxaca", "Puebla", "Querétaro", "Quintana Roo", 
-    "San Luis Potosí", "Sinaloa", "Sonora", "Tabasco", "Tamaulipas", "Tlaxcala", 
-    "Veracruz", "Yucatán", "Zacatecas"
+    // NORTE (8)
+    "Baja California", "Baja California Sur", "Sonora", "Chihuahua", "Coahuila", "Nuevo León", "Tamaulipas", "Durango",
+    // OESTE (8)
+    "Sinaloa", "Nayarit", "Jalisco", "Colima", "Michoacán", "Aguascalientes", "Guanajuato", "Zacatecas",
+    // CENTRO/ESTE (8)
+    "San Luis Potosí", "Querétaro", "Hidalgo", "Estado de México", "Ciudad de México", "Tlaxcala", "Puebla", "Morelos",
+    // SUR (8)
+    "Veracruz", "Guerrero", "Oaxaca", "Chiapas", "Tabasco", "Campeche", "Yucatán", "Quintana Roo"
 ];
+
+// Función para determinar la zona según el índice en 'casillas'
+function obtenerZona(index) {
+    if (index === 0) return "";
+    if (index >= 1 && index <= 8) return "Zona Norte";
+    if (index >= 9 && index <= 16) return "Zona Oeste";
+    if (index >= 17 && index <= 24) return "Zona Centro-Este";
+    if (index >= 25 && index <= 32) return "Zona Sur";
+    return "";
+}
 
 const casillas = ["Meta", ...estadosRepublica];
 let numJugadores = 2;
@@ -204,9 +216,12 @@ function tirarDado() {
     const nombreCasilla = casillas[j.posicion];
     const costo = costoCasilla(j.posicion);
 
+    const zonaCasilla = obtenerZona(j.posicion);
     resultadoDado.textContent = carasDado[avance - 1]; // Uso seguro de textContent
     
-    let mensaje = `Jugador ${j.id} tiró un ${avance}. Avanza a ${nombreCasilla}.`;
+    let mensaje = `Jugador ${j.id} tiró un ${avance}. Avanza a ${nombreCasilla}`;
+    if (zonaCasilla) mensaje += ` (${zonaCasilla})`;
+    mensaje += `.`;
     if (pasoMeta) mensaje += ` Pasó por la Meta y cobró $2000.`;
     
     const duenoId = propietarios[j.posicion];
@@ -230,7 +245,9 @@ function tirarDado() {
     yaTiro = true;
     btnTirar.disabled = true;
     
-    let msgVoz = `Avanzaste ${avance} casillas y llegaste a ${nombreCasilla}. `;
+    let msgVoz = `Avanzaste ${avance} casillas y llegaste a ${nombreCasilla}`;
+    if (zonaCasilla) msgVoz += `, en la ${zonaCasilla}. `;
+    else msgVoz += `. `;
     if (pasoMeta) msgVoz += `Pasaste por la Meta y el banco te ha pagado 2000 pesos. `;
     
     if (j.turnosJugados <= 2) {
@@ -304,10 +321,13 @@ function repetirTurno() {
     if (timeoutTurno) clearTimeout(timeoutTurno);
     const j = jugadores[jugadorActualIndex];
     const nombreCasilla = casillas[j.posicion];
+    const zonaCasilla = obtenerZona(j.posicion);
     const costo = costoCasilla(j.posicion);
     const duenoId = propietarios[j.posicion];
     
-    let msgVoz = `Estás en ${nombreCasilla}. `;
+    let msgVoz = `Estás en ${nombreCasilla}`;
+    if (zonaCasilla) msgVoz += `, en la ${zonaCasilla}. `;
+    else msgVoz += `. `;
     if (costo > 0) {
         if (duenoId === null) {
             msgVoz += `Esta propiedad no tiene dueño y cuesta ${costo} pesos. Tienes ${j.dinero} pesos.`;
