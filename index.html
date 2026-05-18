@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>index.html</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="contenedor">
+        <h1>Viaje Azteca</h1>
+        
+        <div id="configuracion">
+            <p style="font-size: 1.2em; font-weight: bold;">Selecciona el número de jugadores (2 a 6):</p>
+            <input type="number" id="num-jugadores" min="2" max="6" value="2" style="font-size: 1.2em; padding: 5px; width: 60px; margin-bottom: 20px; text-align: center;">
+            <div class="botones">
+                <button class="btn-verde" onclick="iniciarJuego()">Iniciar Juego</button>
+                <button class="btn-azul" onclick="mostrarReglas()">Reglas del Juego</button>
+            </div>
+        </div>
+
+        <div id="juego" style="display: none;">
+            <!-- Área de estado (accesible para lectores de pantalla) -->
+            <div class="estado-turno" aria-live="polite" id="indicador-turno">
+                Turno del Jugador 1
+            </div>
+
+            <div class="dado-container" aria-live="assertive" id="resultado-dado">
+                🎲
+            </div>
+
+            <div class="botones">
+                <button id="btn-tirar" class="btn-amarillo" onclick="accionBoton('Tirar')" aria-label="Tirar el dado">Tirar</button>
+                <button id="btn-comprar" class="btn-verde" onclick="accionBoton('Comprar')" disabled aria-label="Comprar propiedad">Comprar</button>
+                <button id="btn-vender" class="btn-rojo" onclick="accionBoton('Vender')" disabled aria-label="Vender propiedad">Vender</button>
+                <button id="btn-repetir" class="btn-gris" onclick="accionBoton('Repetir')" disabled aria-label="Repetir información">Repetir</button>
+                <button id="btn-inventario" class="btn-azul" onclick="accionBoton('Inventario')" aria-label="Mi Inventario">Mi Inventario</button>
+                <button id="btn-reiniciar" class="btn-azul" onclick="accionBoton('Reiniciar')" aria-label="Reiniciar juego">Reiniciar</button>
+            </div>
+
+            <div class="registro" id="registro-acciones" aria-live="polite">
+                <strong>Registro de jugadas:</strong><br>
+                <span>El juego no ha comenzado.</span><br>
+            </div>
+
+            <!-- Modal Custom de Reinicio -->
+            <div id="modal-reinicio" class="modal-overlay" style="display: none;">
+                <div class="modal-contenido">
+                    <h3 style="margin-top: 0;">¿Cómo deseas reiniciar?</h3>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button class="btn-amarillo" onclick="ejecutarReinicio('mismos')">Reiniciar juego desde cero</button>
+                        <button class="btn-verde" onclick="ejecutarReinicio('config')">Reiniciar con más jugadores</button>
+                        <button class="btn-rojo" onclick="ocultarModalReinicio()">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,151 @@
+/* style.css */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f4f9;
+    color: #333;
+    text-align: center;
+    padding: 20px;
+}
+.contenedor {
+    max-width: 600px;
+    margin: 0 auto;
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+h1 {
+    color: #2c3e50;
+}
+.estado-turno {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+.dado-container {
+    font-size: 4em;
+    margin: 20px 0;
+    min-height: 80px;
+}
+.botones {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+button {
+    font-size: 1.2em;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform 0.2s, opacity 0.2s;
+    touch-action: manipulation;
+}
+button:active {
+    transform: scale(0.95);
+}
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+/* Colores solicitados */
+.btn-amarillo {
+    background-color: #F1C40F; 
+    color: #333;
+}
+.btn-verde {
+    background-color: #2ECC71; 
+    color: white;
+}
+.btn-rojo {
+    background-color: #E74C3C; 
+    color: white;
+}
+.btn-azul {
+    background-color: #3498DB; 
+    color: white;
+}
+.btn-gris {
+    background-color: #95A5A6; 
+    color: white;
+}
+.registro {
+    margin-top: 30px;
+    text-align: left;
+    background: #eee;
+    padding: 15px;
+    border-radius: 8px;
+    height: 150px;
+    overflow-y: auto;
+}
+
+/* Estilos de la ventana Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+.modal-contenido {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    text-align: center;
+    max-width: 90%;
+    width: 400px;
+}
+
+/* Consultas de medios para diseño responsivo (Celulares) */
+@media (max-width: 600px) {
+    body {
+        padding: 10px;
+    }
+    .contenedor {
+        padding: 20px 15px;
+        margin: 0 auto;
+        width: 100%;
+        border-radius: 12px;
+    }
+    h1 {
+        font-size: 1.8em;
+    }
+    .estado-turno {
+        font-size: 1.2em;
+    }
+    .dado-container {
+        font-size: 3.5em;
+        margin: 10px 0;
+        min-height: 60px;
+    }
+    .botones {
+        gap: 10px;
+        flex-direction: column;
+        width: 100%;
+    }
+    button {
+        font-size: 1.1em;
+        padding: 15px 15px;
+        width: 100%;
+        margin-bottom: 0;
+    }
+    #configuracion input[type="number"] {
+        width: 80px;
+        font-size: 1.2em;
+        padding: 10px;
+    }
+}
