@@ -41,7 +41,6 @@ let btnTirar, btnComprar, btnVender, btnRepetir, btnInventario, btnReiniciar, in
 document.addEventListener("DOMContentLoaded", () => {
     btnTirar = document.getElementById('btn-tirar');
     btnComprar = document.getElementById('btn-comprar');
-    btnVender = document.getElementById('btn-vender');
     btnRepetir = document.getElementById('btn-repetir');
     btnInventario = document.getElementById('btn-inventario');
     btnReiniciar = document.getElementById('btn-reiniciar');
@@ -78,7 +77,6 @@ function actualizarInterfaz() {
     indicadorTurno.innerText = `Turno del Jugador ${j.id} | Dinero: $${j.dinero}`;
     btnTirar.disabled = false;
     btnComprar.disabled = true;
-    btnVender.disabled = true;
     btnRepetir.disabled = true;
     btnInventario.disabled = (j.propiedades.length === 0);
     resultadoDado.textContent = "🎲"; // Uso seguro de textContent en lugar de innerHTML
@@ -124,8 +122,6 @@ function accionBoton(boton) {
         tirarDado();
     } else if (boton === 'Comprar') {
         comprarPropiedad();
-    } else if (boton === 'Vender') {
-        venderPropiedad();
     } else if (boton === 'Repetir') {
         repetirTurno();
     } else if (boton === 'Inventario') {
@@ -199,8 +195,7 @@ function mostrarReglas() {
         "Regla 3. Cada jugador comienza con diez mil pesos. " +
         "Regla 4. El sistema administra el banco de manera automática, por lo que ningún jugador necesita repartir el dinero. " +
         "Regla 5. Si eliges comprar y no tienes dinero suficiente, no podrás adquirir la propiedad. Pierde el jugador que se quede sin dinero para comprar estados. " +
-        "Regla 6. Cuentas con 10 segundos para tomar una decisión en tu turno. Si no compras, vendes ni repites, el turno pasará automáticamente. " +
-        "Regla 7. Puedes vender una vez por turno para obtener quinientos pesos.";
+        "Regla 6. Cuentas con 10 segundos para tomar una decisión en tu turno. Si no compras ni repites, el turno pasará automáticamente.";
         
     hablar(textoReglas, true);
 }
@@ -292,7 +287,6 @@ function tirarDado() {
     if (nombreCasilla === "Beneficio") {
         msgVoz += `¡Felicidades, caíste en un Beneficio! El banco te regala 1000 pesos. Tu saldo es ${j.dinero} pesos.`;
         btnComprar.disabled = true;
-        btnVender.disabled = false;
         btnRepetir.disabled = false;
         btnInventario.disabled = (j.propiedades.length === 0);
         hablar(msgVoz, false, () => {
@@ -305,7 +299,6 @@ function tirarDado() {
             agregarRegistro(`¡El jugador ${j.id} se ha quedado sin dinero!`);
         }
         btnComprar.disabled = true;
-        btnVender.disabled = false;
         btnRepetir.disabled = false;
         btnInventario.disabled = (j.propiedades.length === 0);
         hablar(msgVoz, false, () => {
@@ -314,7 +307,6 @@ function tirarDado() {
     } else {
         if (j.turnosJugados <= 2) {
             btnComprar.disabled = true;
-            btnVender.disabled = true;
             btnRepetir.disabled = true;
             btnInventario.disabled = true;
             
@@ -340,7 +332,6 @@ function tirarDado() {
                 }
             }
             
-            btnVender.disabled = false;
             btnRepetir.disabled = false;
             btnInventario.disabled = (j.propiedades.length === 0);
             
@@ -447,15 +438,6 @@ function comprarPropiedad() {
     } else {
         alert("No tienes suficiente dinero.");
     }
-}
-
-function venderPropiedad() {
-    if (!yaTiro) return;
-    const j = jugadores[jugadorActualIndex];
-    j.dinero += 500;
-    agregarRegistro(`Jugador ${j.id} realizó una venta obteniendo $500. Balance: $${j.dinero}.`);
-    hablar(`El jugador ${j.id} realizó una venta.`, true);
-    finalizarTurno();
 }
 
 function finalizarTurno() {
