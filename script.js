@@ -1,23 +1,23 @@
 // script.js
 (() => { // Encapsulamiento IIFE para evitar trampas desde la consola
 const estadosRepublica = [
-    // NORTE (8)
-    "Baja California", "Baja California Sur", "Sonora", "Chihuahua", "Coahuila", "Nuevo León", "Tamaulipas", "Durango",
-    // OESTE (8)
-    "Sinaloa", "Nayarit", "Jalisco", "Colima", "Michoacán", "Aguascalientes", "Guanajuato", "Zacatecas",
-    // CENTRO/ESTE (8)
-    "San Luis Potosí", "Querétaro", "Hidalgo", "Estado de México", "Ciudad de México", "Tlaxcala", "Puebla", "Morelos",
-    // SUR (8)
-    "Veracruz", "Guerrero", "Oaxaca", "Chiapas", "Tabasco", "Campeche", "Yucatán", "Quintana Roo"
+    // NORTE (10 casillas)
+    "Beneficio", "Baja California", "Baja California Sur", "Sonora", "Chihuahua", "Beneficio", "Coahuila", "Nuevo León", "Tamaulipas", "Durango",
+    // OESTE (10 casillas)
+    "Sinaloa", "Beneficio", "Nayarit", "Jalisco", "Colima", "Cárcel", "Michoacán", "Aguascalientes", "Guanajuato", "Zacatecas",
+    // CENTRO/ESTE (11 casillas)
+    "San Luis Potosí", "Beneficio", "Querétaro", "Hidalgo", "Estado de México", "Beneficio", "Ciudad de México", "Tlaxcala", "Puebla", "Beneficio", "Morelos",
+    // SUR (11 casillas)
+    "Veracruz", "Guerrero", "Beneficio", "Oaxaca", "Chiapas", "Cárcel", "Tabasco", "Campeche", "Beneficio", "Yucatán", "Quintana Roo"
 ];
 
 // Función para determinar la zona según el índice en 'casillas'
 function obtenerZona(index) {
     if (index === 0) return "";
-    if (index >= 1 && index <= 8) return "Zona Norte";
-    if (index >= 9 && index <= 16) return "Zona Oeste";
-    if (index >= 17 && index <= 24) return "Zona Centro-Este";
-    if (index >= 25 && index <= 32) return "Zona Sur";
+    if (index >= 1 && index <= 10) return "Zona Norte";
+    if (index >= 11 && index <= 20) return "Zona Oeste";
+    if (index >= 21 && index <= 31) return "Zona Centro-Este";
+    if (index >= 32 && index <= 42) return "Zona Sur";
     return "";
 }
 
@@ -28,8 +28,13 @@ let jugadorActualIndex = 0;
 let yaTiro = false;
 let timeoutTurno = null; // Para el auto-pass en vuelta 2
 
-const costoCasilla = (index) => index === 0 ? 0 : (index * 100) + 1000;
-let propietarios = new Array(33).fill(null); // Almacena el id del dueño de cada casilla
+const costoCasilla = (index) => {
+    if (index === 0) return 0;
+    const nombre = casillas[index];
+    if (nombre === "Beneficio" || nombre === "Cárcel") return 0;
+    return (index * 100) + 1000;
+};
+let propietarios = []; // Almacena el id del dueño de cada casilla
 
 let btnTirar, btnComprar, btnVender, btnRepetir, btnInventario, btnReiniciar, indicadorTurno, resultadoDado, registro;
 
@@ -54,9 +59,9 @@ function iniciarJuego() {
     }
     jugadores = [];
     for(let i = 0; i < numJugadores; i++) {
-        jugadores.push({ id: i+1, posicion: 0, turnosJugados: 0, dinero: 10000, propiedades: [] });
+        jugadores.push({ id: i+1, posicion: 0, turnosJugados: 0, dinero: 10000, propiedades: [], cayoEnEspecial: false });
     }
-    propietarios.fill(null);
+    propietarios = new Array(casillas.length).fill(null);
     jugadorActualIndex = 0;
     yaTiro = false;
     
@@ -154,6 +159,7 @@ function ejecutarReinicio(tipo) {
             jugadores[i].turnosJugados = 0;
             jugadores[i].dinero = 10000;
             jugadores[i].propiedades = [];
+            jugadores[i].cayoEnEspecial = false;
         }
         propietarios.fill(null);
         jugadorActualIndex = 0;
@@ -204,93 +210,146 @@ function tirarDado() {
     j.turnosJugados++;
     
     const carasDado = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
-    const avance = Math.floor(Math.random() * 6) + 1;
+    let d1 = Math.floor(Math.random() * 6) + 1;
+    let d2 = Math.floor(Math.random() * 6) + 1;
+    let avance = d1 + d2;
     
+    // Forzar caída en especial si va a pasar la Meta y no ha caído (trampa del sistema para garantizar probabilidad)
+    if (j.turnosJugados > 2 && !j.cayoEnEspecial && j.posicion + avance >= casillas.length) {
+        let especialEncontrada = -1;
+        for (let i = j.posicion + 1; i < casillas.length; i++) {
+            if (casillas[i] === "Beneficio" || casillas[i] === "Cárcel") {
+                especialEncontrada = i;
+                break;
+            }
+        }
+        if (especialEncontrada !== -1) {
+            avance = especialEncontrada - j.posicion;
+            d1 = Math.min(6, avance - 1);
+            if (d1 < 1) d1 = 1;
+            d2 = avance - d1;
+            if (d2 > 6) { d2 = 6; d1 = avance - 6; }
+        }
+    }
+
     const nuevaPosicion = j.posicion + avance;
     let pasoMeta = false;
     if (nuevaPosicion >= casillas.length && j.turnosJugados > 1) {
         pasoMeta = true;
         j.dinero += 2000;
+        j.cayoEnEspecial = false; // Resetear bandera al pasar la meta
     }
     j.posicion = nuevaPosicion % casillas.length;
     const nombreCasilla = casillas[j.posicion];
     const costo = costoCasilla(j.posicion);
-
     const zonaCasilla = obtenerZona(j.posicion);
-    resultadoDado.textContent = carasDado[avance - 1]; // Uso seguro de textContent
+
+    if (nombreCasilla === "Beneficio" || nombreCasilla === "Cárcel") {
+        j.cayoEnEspecial = true;
+    }
+
+    resultadoDado.textContent = carasDado[d1 - 1] + " " + carasDado[d2 - 1];
     
-    let mensaje = `Jugador ${j.id} tiró un ${avance}. Avanza a ${nombreCasilla}`;
+    let mensaje = `Jugador ${j.id} tiró ${avance} (${d1} y ${d2}). Avanza a ${nombreCasilla}`;
     if (zonaCasilla) mensaje += ` (${zonaCasilla})`;
     mensaje += `.`;
     if (pasoMeta) mensaje += ` Pasó por la Meta y cobró $2000.`;
     
-    const duenoId = propietarios[j.posicion];
     let renta = 0;
-    if (costo > 0) {
-        if (j.turnosJugados <= 2) {
-            mensaje += ` (Primeros turnos, vuelta gratis).`;
-        } else if (duenoId === null) {
-            mensaje += ` Costo: $${costo}.`;
-        } else if (duenoId === j.id) {
-            mensaje += ` Esta propiedad es tuya.`;
-        } else {
-            renta = Math.floor(costo / 2);
-            mensaje += ` Es del Jugador ${duenoId}. Paga renta de $${renta}.`;
-            j.dinero -= renta;
-            jugadores[duenoId - 1].dinero += renta;
+    if (nombreCasilla === "Beneficio") {
+        j.dinero += 1000;
+        mensaje += ` ¡Beneficio! Gana $1000.`;
+    } else if (nombreCasilla === "Cárcel") {
+        j.dinero -= 2000;
+        mensaje += ` ¡Cárcel! Paga $2000.`;
+    } else {
+        const duenoId = propietarios[j.posicion];
+        if (costo > 0) {
+            if (j.turnosJugados <= 2) {
+                mensaje += ` (Primeros turnos, vuelta gratis).`;
+            } else if (duenoId === null) {
+                mensaje += ` Costo: $${costo}.`;
+            } else if (duenoId === j.id) {
+                mensaje += ` Esta propiedad es tuya.`;
+            } else {
+                renta = Math.floor(costo / 2);
+                mensaje += ` Es del Jugador ${duenoId}. Paga renta de $${renta}.`;
+                j.dinero -= renta;
+                jugadores[duenoId - 1].dinero += renta;
+            }
         }
     }
+    
     agregarRegistro(mensaje);
-
     yaTiro = true;
     btnTirar.disabled = true;
     
-    let msgVoz = `Avanzaste ${avance} casillas y llegaste a ${nombreCasilla}`;
+    let msgVoz = `Tiraste un ${d1} y un ${d2}, avanzas ${avance} casillas y llegaste a ${nombreCasilla}`;
     if (zonaCasilla) msgVoz += `, en la ${zonaCasilla}. `;
     else msgVoz += `. `;
     if (pasoMeta) msgVoz += `Pasaste por la Meta y el banco te ha pagado 2000 pesos. `;
-    
-    if (j.turnosJugados <= 2) {
+
+    if (nombreCasilla === "Beneficio") {
+        msgVoz += `¡Felicidades, caíste en un Beneficio! El banco te regala 1000 pesos. Tu saldo es ${j.dinero} pesos.`;
         btnComprar.disabled = true;
-        btnVender.disabled = true;
-        btnRepetir.disabled = true;
-        btnInventario.disabled = true;
-        
-        hablar(msgVoz, false, () => {
-            pasarTurno(true);
-        });
-    } else {
-        if (costo === 0) {
-            // Es la meta u otra casilla sin costo
-            btnComprar.disabled = true;
-        } else if (duenoId === null) {
-            msgVoz += `Esta propiedad no tiene dueño y cuesta ${costo} pesos. Tienes ${j.dinero} pesos.`;
-            btnComprar.disabled = (j.dinero < costo);
-        } else if (duenoId === j.id) {
-            msgVoz += `Esta propiedad ya te pertenece.`;
-            btnComprar.disabled = true;
-        } else {
-            msgVoz += `Esta propiedad pertenece al Jugador ${duenoId}. Le has pagado una renta automática de ${renta} pesos. Te quedan ${j.dinero} pesos.`;
-            btnComprar.disabled = true;
-            if (j.dinero <= 0) {
-                msgVoz += ` Te has quedado sin dinero para pagar.`;
-                agregarRegistro(`¡El jugador ${j.id} se ha quedado sin dinero!`);
-            }
-        }
-        
         btnVender.disabled = false;
         btnRepetir.disabled = false;
         btnInventario.disabled = (j.propiedades.length === 0);
-        
         hablar(msgVoz, false, () => {
-            timeoutTurno = setTimeout(() => {
-                if (yaTiro) {
-                    agregarRegistro("Tiempo de espera agotado.");
-                    hablar("Tiempo de espera agotado.", true);
-                    pasarTurno(true);
-                }
-            }, 10000);
+            timeoutTurno = setTimeout(() => { if (yaTiro) pasarTurno(true); }, 10000);
         });
+    } else if (nombreCasilla === "Cárcel") {
+        msgVoz += `¡Qué mala suerte, caíste en la Cárcel! Pagas una multa de 2000 pesos. Tu saldo es ${j.dinero} pesos.`;
+        if (j.dinero <= 0) {
+            msgVoz += ` Te has quedado sin dinero para pagar la multa.`;
+            agregarRegistro(`¡El jugador ${j.id} se ha quedado sin dinero!`);
+        }
+        btnComprar.disabled = true;
+        btnVender.disabled = false;
+        btnRepetir.disabled = false;
+        btnInventario.disabled = (j.propiedades.length === 0);
+        hablar(msgVoz, false, () => {
+            timeoutTurno = setTimeout(() => { if (yaTiro) pasarTurno(true); }, 10000);
+        });
+    } else {
+        if (j.turnosJugados <= 2) {
+            btnComprar.disabled = true;
+            btnVender.disabled = true;
+            btnRepetir.disabled = true;
+            btnInventario.disabled = true;
+            
+            hablar(msgVoz, false, () => {
+                pasarTurno(true);
+            });
+        } else {
+            const duenoId = propietarios[j.posicion];
+            if (costo === 0) {
+                btnComprar.disabled = true;
+            } else if (duenoId === null) {
+                msgVoz += `Esta propiedad no tiene dueño y cuesta ${costo} pesos. Tienes ${j.dinero} pesos.`;
+                btnComprar.disabled = (j.dinero < costo);
+            } else if (duenoId === j.id) {
+                msgVoz += `Esta propiedad ya te pertenece.`;
+                btnComprar.disabled = true;
+            } else {
+                msgVoz += `Esta propiedad pertenece al Jugador ${duenoId}. Le has pagado una renta automática de ${renta} pesos. Te quedan ${j.dinero} pesos.`;
+                btnComprar.disabled = true;
+                if (j.dinero <= 0) {
+                    msgVoz += ` Te has quedado sin dinero para pagar la renta.`;
+                    agregarRegistro(`¡El jugador ${j.id} se ha quedado sin dinero!`);
+                }
+            }
+            
+            btnVender.disabled = false;
+            btnRepetir.disabled = false;
+            btnInventario.disabled = (j.propiedades.length === 0);
+            
+            hablar(msgVoz, false, () => {
+                timeoutTurno = setTimeout(() => {
+                    if (yaTiro) pasarTurno(true);
+                }, 10000);
+            });
+        }
     }
 }
 
@@ -328,7 +387,12 @@ function repetirTurno() {
     let msgVoz = `Estás en ${nombreCasilla}`;
     if (zonaCasilla) msgVoz += `, en la ${zonaCasilla}. `;
     else msgVoz += `. `;
-    if (costo > 0) {
+    
+    if (nombreCasilla === "Beneficio") {
+        msgVoz += `Esta es una casilla especial de regalo. Tienes ${j.dinero} pesos.`;
+    } else if (nombreCasilla === "Cárcel") {
+        msgVoz += `Esta es la casilla de la cárcel. Tienes ${j.dinero} pesos.`;
+    } else if (costo > 0) {
         if (duenoId === null) {
             msgVoz += `Esta propiedad no tiene dueño y cuesta ${costo} pesos. Tienes ${j.dinero} pesos.`;
         } else if (duenoId === j.id) {
