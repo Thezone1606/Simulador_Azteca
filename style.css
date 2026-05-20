@@ -21,6 +21,25 @@ body {
 h1 {
     color: #2c3e50;
 }
+.input-config {
+    font-size: 1.2em;
+    padding: 8px;
+    width: 80px;
+    margin-bottom: 20px;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+.select-config {
+    font-size: 1.2em;
+    padding: 8px;
+    margin-bottom: 20px;
+    width: 100%;
+    max-width: 300px;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
 .estado-turno {
     font-size: 1.5em;
     font-weight: bold;
@@ -143,9 +162,17 @@ button:disabled {
         width: 100%;
         margin-bottom: 0;
     }
-    #configuracion input[type="number"] {
-        width: 80px;
+    #configuracion .input-config {
+        width: 100px;
         font-size: 1.2em;
-        padding: 10px;
+        padding: 12px;
+    }
+    #configuracion .select-config {
+        width: 100%;
+        max-width: 100%;
+        font-size: 1.1em;
+        padding: 12px;
+        margin-bottom: 20px;
+        white-space: normal;
     }
 }
