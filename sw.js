@@ -1,4 +1,4 @@
-const CACHE_NAME = 'viaje-azteca-v1';
+const CACHE_NAME = 'viaje-azteca-v2';
 const urlsToCache = [
   './',
   './index.html',
