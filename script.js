@@ -179,7 +179,7 @@ function ejecutarReinicio(tipo) {
         yaTiro = false;
         actualizarInterfaz();
         reiniciarRegistro('El juego ha sido reiniciado. Todos vuelven a la Meta.');
-        hablar("El juego ha sido reiniciado desde cero. Todos vuelven a la Meta.");
+        hablar("Bienvenidos a Viaje Azteca. El juego ha sido reiniciado desde cero. Todos vuelven a la Meta.");
     }
 }
 
@@ -209,30 +209,31 @@ function mostrarReglas() {
     let expInput = document.getElementById('nivel-experiencia') ? document.getElementById('nivel-experiencia').value : 'principiante';
     const esExp = (expInput === 'experimentado');
     
-    let textoReglas = "Reglas del Viaje Azteca. ";
+    let textoReglas = "Reglas del Viaje Azteca para " + (esExp ? "Experimentados. " : "Principiantes. ");
     if (!esExp) {
         textoReglas += "Regla 1. En tus primeros dos turnos, correspondientes a la vuelta gratis, solo avanzarás para conocer el tablero. " +
-                       "Regla 2. A partir del tercer turno, podrás comprar los estados en los que caigas. ";
+                       "Regla 2. A partir del tercer turno, podrás comprar los estados en los que caigas. " +
+                       "Regla 3. Cada jugador comienza con diez mil pesos y el sistema administra el dinero. " +
+                       "Regla 4. Si caes en una propiedad ajena pagarás renta, y si te quedas sin dinero pierdes. " +
+                       "Regla 5. Tienes 10 segundos para jugar tu turno.";
     } else {
-        textoReglas += "Regla 1. Al ser un jugador experimentado, puedes comprar los estados desde tu primer turno. ";
+        textoReglas += "Regla 1. Como ya saben jugar, pueden comprar propiedades desde su primer turno. " +
+                       "Regla 2. Todos comienzan con diez mil pesos y el sistema administra las rentas y pagos automáticamente. " +
+                       "Regla 3. El juego es dinámico: si se quedan sin dinero para una renta o multa, pierden. " +
+                       "Regla 4. Cuentan con 10 segundos de tiempo límite para tomar sus decisiones.";
     }
-    
-    textoReglas += "Regla 3. Cada jugador comienza con diez mil pesos. " +
-        "Regla 4. El sistema administra el banco de manera automática, por lo que ningún jugador necesita repartir el dinero. " +
-        "Regla 5. Si eliges comprar y no tienes dinero suficiente, no podrás adquirir la propiedad. Pierde el jugador que se quede sin dinero para comprar estados. " +
-        "Regla 6. Cuentas con 10 segundos para tomar una decisión en tu turno. Si no compras ni repites, el turno pasará automáticamente.";
         
     hablar(textoReglas, true);
 }
 
 function tirarDado() {
+    reproducirSonido('dado');
     const j = jugadores[jugadorActualIndex];
     j.turnosJugados++;
     
     const carasDado = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
     let d1 = Math.floor(Math.random() * 6) + 1;
-    let d2 = Math.floor(Math.random() * 6) + 1;
-    let avance = d1 + d2;
+    let avance = d1;
     
     // Forzar caída en especial si va a pasar la Meta y no ha caído (trampa del sistema para garantizar probabilidad)
     if (j.turnosJugados > 2 && !j.cayoEnEspecial && j.posicion + avance >= casillas.length) {
@@ -244,11 +245,11 @@ function tirarDado() {
             }
         }
         if (especialEncontrada !== -1) {
-            avance = especialEncontrada - j.posicion;
-            d1 = Math.min(6, avance - 1);
-            if (d1 < 1) d1 = 1;
-            d2 = avance - d1;
-            if (d2 > 6) { d2 = 6; d1 = avance - 6; }
+            let dist = especialEncontrada - j.posicion;
+            if (dist <= 6) {
+                avance = dist;
+                d1 = dist;
+            }
         }
     }
 
@@ -268,9 +269,9 @@ function tirarDado() {
         j.cayoEnEspecial = true;
     }
 
-    resultadoDado.textContent = carasDado[d1 - 1] + " " + carasDado[d2 - 1];
+    resultadoDado.textContent = carasDado[d1 - 1];
     
-    let mensaje = `Jugador ${j.id} tiró ${avance} (${d1} y ${d2}). Avanza a ${nombreCasilla}`;
+    let mensaje = `Jugador ${j.id} tiró ${avance}. Avanza a ${nombreCasilla}`;
     if (zonaCasilla) mensaje += ` (${zonaCasilla})`;
     mensaje += `.`;
     if (pasoMeta) mensaje += ` Pasó por la Meta y cobró $2000.`;
@@ -306,12 +307,13 @@ function tirarDado() {
     yaTiro = true;
     btnTirar.disabled = true;
     
-    let msgVoz = `Tiraste un ${d1} y un ${d2}, avanzas ${avance} casillas y llegaste a ${nombreCasilla}`;
+    let msgVoz = `Tiraste un ${d1}, avanzas ${avance} casillas y llegaste a ${nombreCasilla}`;
     if (zonaCasilla) msgVoz += `, en la ${zonaCasilla}. `;
     else msgVoz += `. `;
     if (pasoMeta) msgVoz += `Pasaste por la Meta y el banco te ha pagado 2000 pesos. `;
 
     if (nombreCasilla === "Beneficio") {
+        reproducirSonido('beneficio');
         msgVoz += `¡Felicidades, caíste en un Beneficio! El banco te regala 1000 pesos. Tu saldo es ${j.dinero} pesos.`;
         btnComprar.disabled = true;
         btnRepetir.disabled = false;
@@ -320,6 +322,7 @@ function tirarDado() {
             timeoutTurno = setTimeout(() => { if (yaTiro) pasarTurno(true); }, 10000);
         });
     } else if (nombreCasilla === "Cárcel") {
+        reproducirSonido('carcel');
         const nuevoNombre = casillas[j.posicion];
         msgVoz += `¡Qué mala suerte, caíste en la Cárcel! Pagas una multa de 2000 pesos y retrocedes dos casillas hasta ${nuevoNombre}. Tu saldo es ${j.dinero} pesos.`;
         if (j.dinero <= 0) {
@@ -445,6 +448,7 @@ function comprarPropiedad() {
         
         hablar(`¿Estás seguro de comprar el estado de ${nombreCasilla} por ${costo} pesos? Presiona aceptar o cancelar en la pantalla.`, true, () => {
             if (confirm(`¿Estás seguro de comprar el estado de ${nombreCasilla} por $${costo}?`)) {
+                reproducirSonido('comprar');
                 j.dinero -= costo;
                 propietarios[j.posicion] = j.id;
                 j.propiedades.push(nombreCasilla);
@@ -526,6 +530,52 @@ function reproducirMusicaAztecaYBienvenida() {
 }
 document.addEventListener('click', reproducirMusicaAztecaYBienvenida, {once: true});
 document.addEventListener('touchstart', reproducirMusicaAztecaYBienvenida, {once: true});
+
+function reproducirSonido(tipo) {
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        const t = ctx.currentTime;
+        if (tipo === 'dado') {
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(400, t);
+            osc.frequency.exponentialRampToValueAtTime(100, t + 0.1);
+            gain.gain.setValueAtTime(0.5, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+            osc.start(t);
+            osc.stop(t + 0.1);
+        } else if (tipo === 'comprar') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(1000, t);
+            osc.frequency.setValueAtTime(1500, t + 0.1);
+            gain.gain.setValueAtTime(0.3, t);
+            gain.gain.linearRampToValueAtTime(0, t + 0.3);
+            osc.start(t);
+            osc.stop(t + 0.3);
+        } else if (tipo === 'beneficio') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(400, t);
+            osc.frequency.setValueAtTime(600, t + 0.1);
+            osc.frequency.setValueAtTime(800, t + 0.2);
+            gain.gain.setValueAtTime(0.3, t);
+            gain.gain.linearRampToValueAtTime(0, t + 0.4);
+            osc.start(t);
+            osc.stop(t + 0.4);
+        } else if (tipo === 'carcel') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(100, t);
+            osc.frequency.linearRampToValueAtTime(50, t + 0.4);
+            gain.gain.setValueAtTime(0.3, t);
+            gain.gain.linearRampToValueAtTime(0, t + 0.4);
+            osc.start(t);
+            osc.stop(t + 0.4);
+        }
+    } catch(e) {}
+}
 
 // Exponer funciones globales para que funcionen con los botones del HTML
 window.iniciarJuego = iniciarJuego;
