@@ -63,7 +63,7 @@ function iniciarJuego() {
 
     jugadores = [];
     for(let i = 0; i < numJugadores; i++) {
-        jugadores.push({ id: i+1, posicion: 0, turnosJugados: esExperimentado ? 2 : 0, dinero: 10000, propiedades: [], cayoEnEspecial: false });
+        jugadores.push({ id: i+1, posicion: 0, turnosJugados: 0, vueltas: 0, dinero: 10000, propiedades: [], cayoEnEspecial: false });
     }
     propietarios = new Array(casillas.length).fill(null);
     jugadorActualIndex = 0;
@@ -169,7 +169,8 @@ function ejecutarReinicio(tipo) {
     } else if (tipo === 'mismos') {
         for(let i=0; i<numJugadores; i++) {
             jugadores[i].posicion = 0;
-            jugadores[i].turnosJugados = esExperimentado ? 2 : 0;
+            jugadores[i].turnosJugados = 0;
+            jugadores[i].vueltas = 0;
             jugadores[i].dinero = 10000;
             jugadores[i].propiedades = [];
             jugadores[i].cayoEnEspecial = false;
@@ -211,13 +212,13 @@ function mostrarReglas() {
     
     let textoReglas = "Reglas del Viaje Azteca para " + (esExp ? "Experimentados. " : "Principiantes. ");
     if (!esExp) {
-        textoReglas += "Regla 1. En tus primeros dos turnos, correspondientes a la vuelta gratis, solo avanzarás para conocer el tablero. " +
-                       "Regla 2. A partir del tercer turno, podrás comprar los estados en los que caigas. " +
+        textoReglas += "Regla 1. En tu primera vuelta completa solo avanzarás para conocer el tablero. " +
+                       "Regla 2. A partir de tu segunda vuelta, podrás comprar los estados en los que caigas. " +
                        "Regla 3. Cada jugador comienza con diez mil pesos y el sistema administra el dinero. " +
                        "Regla 4. Si caes en una propiedad ajena pagarás renta, y si te quedas sin dinero pierdes. " +
                        "Regla 5. Tienes 10 segundos para jugar tu turno.";
     } else {
-        textoReglas += "Regla 1. Como ya saben jugar, pueden comprar propiedades desde su primer turno. " +
+        textoReglas += "Regla 1. Como ya saben jugar, la opción de compra se desbloquea en cuanto pasen la Meta y empiecen la segunda vuelta. " +
                        "Regla 2. Todos comienzan con diez mil pesos y el sistema administra las rentas y pagos automáticamente. " +
                        "Regla 3. El juego es dinámico: si se quedan sin dinero para una renta o multa, pierden. " +
                        "Regla 4. Cuentan con 10 segundos de tiempo límite para tomar sus decisiones.";
@@ -257,6 +258,7 @@ function tirarDado() {
     let pasoMeta = false;
     if (nuevaPosicion >= casillas.length && j.turnosJugados > 1) {
         pasoMeta = true;
+        j.vueltas++;
         j.dinero += 2000;
         j.cayoEnEspecial = false; // Resetear bandera al pasar la meta
     }
@@ -288,8 +290,8 @@ function tirarDado() {
     } else {
         const duenoId = propietarios[j.posicion];
         if (costo > 0) {
-            if (j.turnosJugados <= 2) {
-                mensaje += ` (Primeros turnos, vuelta gratis).`;
+            if (j.vueltas === 0) {
+                mensaje += ` (Primera vuelta, compras bloqueadas).`;
             } else if (duenoId === null) {
                 mensaje += ` Costo: $${costo}.`;
             } else if (duenoId === j.id) {
@@ -336,7 +338,7 @@ function tirarDado() {
             timeoutTurno = setTimeout(() => { if (yaTiro) pasarTurno(true); }, 10000);
         });
     } else {
-        if (j.turnosJugados <= 2) {
+        if (j.vueltas === 0) {
             btnComprar.disabled = true;
             btnRepetir.disabled = true;
             btnInventario.disabled = true;
