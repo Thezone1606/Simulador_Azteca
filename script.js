@@ -78,8 +78,8 @@ function iniciarJuego() {
     let mensajeVoz = 'El juego ha comenzado. Todos los jugadores están en la Meta.';
     
     if (esExperimentado) {
-        mensajeInicio = 'El juego ha comenzado en Modo Experimentado. Todos los jugadores están en la Meta.';
-        mensajeVoz = 'El juego ha comenzado en Modo Experimentado. Todos los jugadores están en la Meta y pueden comprar desde su primer turno.';
+        mensajeInicio = 'El juego ha comenzado en Modo Experimentado. Un gusto tenerte de nueva cuenta aquí, diviértete, experimenta y confía en tus sentidos.';
+        mensajeVoz = 'Un gusto tenerte de nueva cuenta aquí, diviértete, experimenta y confía en tus sentidos. El juego ha comenzado en Modo Experimentado. Todos los jugadores están en la Meta y pueden comprar desde su primer turno.';
     } else {
         mensajeInicio = 'El juego ha comenzado en Modo Principiante. Todos los jugadores están en la Meta.';
         mensajeVoz = 'El juego ha comenzado en Modo Principiante. Todos los jugadores están en la Meta. Recuerden que en sus primeros dos turnos solo recorrerán el tablero.';
@@ -476,6 +476,56 @@ function finalizarTurno() {
     agregarRegistro(`--- Inicia el turno del Jugador ${jugadores[jugadorActualIndex].id} ---`);
     actualizarInterfaz();
 }
+
+let bienvenidaGeneralDicha = false;
+function reproducirMusicaAztecaYBienvenida() {
+    if (bienvenidaGeneralDicha) return;
+    bienvenidaGeneralDicha = true;
+    
+    hablar("Bienvenidos a Viaje Azteca.", true, () => {
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            const ctx = new AudioContext();
+            
+            function playDrum(time) {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(150, time);
+                osc.frequency.exponentialRampToValueAtTime(40, time + 0.1);
+                gain.gain.setValueAtTime(1, time);
+                gain.gain.exponentialRampToValueAtTime(0.01, time + 0.2);
+                osc.start(time);
+                osc.stop(time + 0.2);
+            }
+            
+            function playFlute(freq, time, duration) {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0, time);
+                gain.gain.linearRampToValueAtTime(0.3, time + 0.1);
+                gain.gain.setValueAtTime(0.3, time + duration - 0.1);
+                gain.gain.linearRampToValueAtTime(0, time + duration);
+                osc.start(time);
+                osc.stop(time + duration);
+            }
+            
+            const t = ctx.currentTime;
+            playDrum(t); playDrum(t + 0.4); playDrum(t + 0.8); playDrum(t + 1.2); playDrum(t + 1.6); playDrum(t + 2.0);
+            playFlute(659.25, t, 0.4); playFlute(783.99, t + 0.4, 0.4); playFlute(880.00, t + 0.8, 0.8); playFlute(783.99, t + 1.6, 0.4); playFlute(659.25, t + 2.0, 0.8);
+        } catch(e) {
+            console.log("Web Audio API no soportada", e);
+        }
+    });
+}
+document.addEventListener('click', reproducirMusicaAztecaYBienvenida, {once: true});
+document.addEventListener('touchstart', reproducirMusicaAztecaYBienvenida, {once: true});
 
 // Exponer funciones globales para que funcionen con los botones del HTML
 window.iniciarJuego = iniciarJuego;
