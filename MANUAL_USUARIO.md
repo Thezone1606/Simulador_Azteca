@@ -27,7 +27,6 @@ Durante tu turno, tendrás habilitados diferentes botones dependiendo de la situ
 
 - 🎲 **Tirar:** Toca este botón para lanzar el dado. El narrador te dirá qué número salió y a qué estado de México llegaste.
 - 💵 **Comprar:** Si caes en un estado que no le pertenece a nadie (y ya pasaste tu vuelta de gracia de 2 turnos), este botón se pondrá verde. Tócalo si deseas adquirir la propiedad. Te pedirá una confirmación en pantalla.
-- 💰 **Vender:** Si te estás quedando sin dinero, puedes presionar este botón para realizar una venta rápida y obtener `$500` del banco al instante.
 - 🔁 **Repetir:** Si te distrajiste o no escuchaste bien al narrador, toca este botón para que el juego vuelva a repetir en voz alta en qué estado estás, cuánto cuesta o de quién es.
 - 🎒 **Mi Inventario:** Al tocarlo, el narrador te leerá una lista completa de todos los estados que son de tu propiedad.
 - 🔄 **Reiniciar:** Abre un menú para reiniciar todo desde cero o volver a la pantalla de configuración para agregar o quitar jugadores.

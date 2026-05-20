@@ -39,8 +39,7 @@ Este proyecto ha sido desarrollado con un fuerte enfoque en la **accesibilidad**
 2. **Vuelta de Gracia:** Durante tus **primeros 2 turnos**, el juego solo te permitirá avanzar y conocer el tablero. No podrás comprar nada.
 3. **Compra de Estados:** A partir de tu tercer turno, si caes en un estado sin dueño, tendrás la opción de comprarlo.
 4. **Pago de Rentas:** Si caes en un estado que le pertenece a otro jugador, el banco te descontará automáticamente la mitad del valor del estado y se lo dará al dueño.
-5. **Venta rápida:** Tienes la opción de vender si necesitas dinero (recibes $500).
-6. **Bancarrota:** El juego termina para el jugador que se quede sin fondos para pagar una renta.
+5. **Bancarrota:** El juego termina para el jugador que se quede sin fondos para pagar una renta.
 
 ---
 

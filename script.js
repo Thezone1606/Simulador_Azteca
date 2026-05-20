@@ -23,6 +23,7 @@ function obtenerZona(index) {
 
 const casillas = ["Meta", ...estadosRepublica];
 let numJugadores = 2;
+let esExperimentado = false;
 let jugadores = [];
 let jugadorActualIndex = 0;
 let yaTiro = false;
@@ -36,7 +37,7 @@ const costoCasilla = (index) => {
 };
 let propietarios = []; // Almacena el id del dueño de cada casilla
 
-let btnTirar, btnComprar, btnVender, btnRepetir, btnInventario, btnReiniciar, indicadorTurno, resultadoDado, registro;
+let btnTirar, btnComprar, btnRepetir, btnInventario, btnReiniciar, indicadorTurno, resultadoDado, registro;
 
 document.addEventListener("DOMContentLoaded", () => {
     btnTirar = document.getElementById('btn-tirar');
@@ -56,9 +57,13 @@ function iniciarJuego() {
         alert("El número de jugadores debe ser entre 2 y 6.");
         return;
     }
+    
+    let expInput = document.getElementById('nivel-experiencia').value;
+    esExperimentado = (expInput === 'experimentado');
+
     jugadores = [];
     for(let i = 0; i < numJugadores; i++) {
-        jugadores.push({ id: i+1, posicion: 0, turnosJugados: 0, dinero: 10000, propiedades: [], cayoEnEspecial: false });
+        jugadores.push({ id: i+1, posicion: 0, turnosJugados: esExperimentado ? 2 : 0, dinero: 10000, propiedades: [], cayoEnEspecial: false });
     }
     propietarios = new Array(casillas.length).fill(null);
     jugadorActualIndex = 0;
@@ -68,8 +73,20 @@ function iniciarJuego() {
     document.getElementById('juego').style.display = 'block';
     
     actualizarInterfaz();
-    reiniciarRegistro('El juego ha comenzado. Todos los jugadores están en la Meta.');
-    hablar("El juego ha comenzado. Todos los jugadores están en la Meta.");
+    
+    let mensajeInicio = 'El juego ha comenzado. Todos los jugadores están en la Meta.';
+    let mensajeVoz = 'El juego ha comenzado. Todos los jugadores están en la Meta.';
+    
+    if (esExperimentado) {
+        mensajeInicio = 'El juego ha comenzado en Modo Experimentado. Todos los jugadores están en la Meta.';
+        mensajeVoz = 'El juego ha comenzado en Modo Experimentado. Todos los jugadores están en la Meta y pueden comprar desde su primer turno.';
+    } else {
+        mensajeInicio = 'El juego ha comenzado en Modo Principiante. Todos los jugadores están en la Meta.';
+        mensajeVoz = 'El juego ha comenzado en Modo Principiante. Todos los jugadores están en la Meta. Recuerden que en sus primeros dos turnos solo recorrerán el tablero.';
+    }
+    
+    reiniciarRegistro(mensajeInicio);
+    hablar(mensajeVoz);
 }
 
 function actualizarInterfaz() {
@@ -152,7 +169,7 @@ function ejecutarReinicio(tipo) {
     } else if (tipo === 'mismos') {
         for(let i=0; i<numJugadores; i++) {
             jugadores[i].posicion = 0;
-            jugadores[i].turnosJugados = 0;
+            jugadores[i].turnosJugados = esExperimentado ? 2 : 0;
             jugadores[i].dinero = 10000;
             jugadores[i].propiedades = [];
             jugadores[i].cayoEnEspecial = false;
@@ -189,10 +206,18 @@ function agregarRegistro(mensaje) {
 }
 
 function mostrarReglas() {
-    const textoReglas = "Reglas del Viaje Azteca. " +
-        "Regla 1. En tus primeros dos turnos, correspondientes a la vuelta gratis, solo avanzarás para conocer el tablero. " +
-        "Regla 2. A partir del tercer turno, podrás comprar los estados en los que caigas. " +
-        "Regla 3. Cada jugador comienza con diez mil pesos. " +
+    let expInput = document.getElementById('nivel-experiencia') ? document.getElementById('nivel-experiencia').value : 'principiante';
+    const esExp = (expInput === 'experimentado');
+    
+    let textoReglas = "Reglas del Viaje Azteca. ";
+    if (!esExp) {
+        textoReglas += "Regla 1. En tus primeros dos turnos, correspondientes a la vuelta gratis, solo avanzarás para conocer el tablero. " +
+                       "Regla 2. A partir del tercer turno, podrás comprar los estados en los que caigas. ";
+    } else {
+        textoReglas += "Regla 1. Al ser un jugador experimentado, puedes comprar los estados desde tu primer turno. ";
+    }
+    
+    textoReglas += "Regla 3. Cada jugador comienza con diez mil pesos. " +
         "Regla 4. El sistema administra el banco de manera automática, por lo que ningún jugador necesita repartir el dinero. " +
         "Regla 5. Si eliges comprar y no tienes dinero suficiente, no podrás adquirir la propiedad. Pierde el jugador que se quede sin dinero para comprar estados. " +
         "Regla 6. Cuentas con 10 segundos para tomar una decisión en tu turno. Si no compras ni repites, el turno pasará automáticamente.";
@@ -256,7 +281,9 @@ function tirarDado() {
         mensaje += ` ¡Beneficio! Gana $1000.`;
     } else if (nombreCasilla === "Cárcel") {
         j.dinero -= 2000;
-        mensaje += ` ¡Cárcel! Paga $2000.`;
+        j.posicion = (j.posicion - 2 + casillas.length) % casillas.length;
+        const nuevoNombre = casillas[j.posicion];
+        mensaje += ` ¡Cárcel! Paga $2000 y retrocede a ${nuevoNombre}.`;
     } else {
         const duenoId = propietarios[j.posicion];
         if (costo > 0) {
@@ -287,20 +314,19 @@ function tirarDado() {
     if (nombreCasilla === "Beneficio") {
         msgVoz += `¡Felicidades, caíste en un Beneficio! El banco te regala 1000 pesos. Tu saldo es ${j.dinero} pesos.`;
         btnComprar.disabled = true;
-        btnVender.disabled = false;
         btnRepetir.disabled = false;
         btnInventario.disabled = (j.propiedades.length === 0);
         hablar(msgVoz, false, () => {
             timeoutTurno = setTimeout(() => { if (yaTiro) pasarTurno(true); }, 10000);
         });
     } else if (nombreCasilla === "Cárcel") {
-        msgVoz += `¡Qué mala suerte, caíste en la Cárcel! Pagas una multa de 2000 pesos. Tu saldo es ${j.dinero} pesos.`;
+        const nuevoNombre = casillas[j.posicion];
+        msgVoz += `¡Qué mala suerte, caíste en la Cárcel! Pagas una multa de 2000 pesos y retrocedes dos casillas hasta ${nuevoNombre}. Tu saldo es ${j.dinero} pesos.`;
         if (j.dinero <= 0) {
             msgVoz += ` Te has quedado sin dinero para pagar la multa.`;
             agregarRegistro(`¡El jugador ${j.id} se ha quedado sin dinero!`);
         }
         btnComprar.disabled = true;
-        btnVender.disabled = false;
         btnRepetir.disabled = false;
         btnInventario.disabled = (j.propiedades.length === 0);
         hablar(msgVoz, false, () => {
