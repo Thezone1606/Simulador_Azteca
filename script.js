@@ -59,11 +59,11 @@ function iniciarJuego() {
     }
     
     let expInput = document.getElementById('nivel-experiencia').value;
-    esExperimentado = (expInput === 'experimentado');
+    esExperimentado = (expInput === 'clasico' || expInput === 'experimentado');
 
     jugadores = [];
     for(let i = 0; i < numJugadores; i++) {
-        jugadores.push({ id: i+1, posicion: 0, turnosJugados: 0, vueltas: 0, dinero: 10000, propiedades: [], cayoEnEspecial: false });
+        jugadores.push({ id: i+1, posicion: 0, turnosJugados: 0, vueltas: 0, dinero: 10000, propiedades: [], cayoEnEspecial: false, enCarcel: false, bloqueoCompra: false });
     }
     propietarios = new Array(casillas.length).fill(null);
     jugadorActualIndex = 0;
@@ -78,11 +78,11 @@ function iniciarJuego() {
     let mensajeVoz = 'El juego ha comenzado. Todos los jugadores están en la Meta.';
     
     if (esExperimentado) {
-        mensajeInicio = 'El juego ha comenzado en Modo Experimentado. Un gusto tenerte de nueva cuenta aquí, diviértete, experimenta y confía en tus sentidos.';
-        mensajeVoz = 'Un gusto tenerte de nueva cuenta aquí, diviértete, experimenta y confía en tus sentidos. El juego ha comenzado en Modo Experimentado. Todos los jugadores están en la Meta y pueden comprar desde su primer turno.';
+        mensajeInicio = 'El juego ha comenzado en Modo Clásico.';
+        mensajeVoz = 'Bienvenidos a Viaje Azteca. Conoce los 32 estados y diviértete usando tus sentidos. El juego ha comenzado en Modo Clásico.';
     } else {
-        mensajeInicio = 'El juego ha comenzado en Modo Principiante. Todos los jugadores están en la Meta.';
-        mensajeVoz = 'El juego ha comenzado en Modo Principiante. Todos los jugadores están en la Meta. Recuerden que en sus primeros dos turnos solo recorrerán el tablero.';
+        mensajeInicio = 'El juego ha comenzado en Modo Principiante.';
+        mensajeVoz = 'Bienvenidos a Viaje Azteca. Conoce los 32 estados y diviértete usando tus sentidos. El juego ha comenzado en Modo Principiante.';
     }
     
     reiniciarRegistro(mensajeInicio);
@@ -125,6 +125,34 @@ function hablar(texto, cancelarAnterior = true, callbackEnd = null) {
 
     } else if (callbackEnd) {
         // Fallback si no hay soporte de voz
+        setTimeout(callbackEnd, 3000);
+    }
+}
+
+function hablarComoGuia(texto, callbackEnd = null) {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const mensaje = new SpeechSynthesisUtterance(texto);
+        mensaje.lang = 'es-MX';
+        mensaje.pitch = 1.3; 
+        mensaje.rate = 1.1;  
+        
+        let completado = false;
+        const finalizar = () => {
+            if (!completado) {
+                completado = true;
+                if (callbackEnd) callbackEnd();
+            }
+        };
+
+        mensaje.onend = finalizar;
+        mensaje.onerror = finalizar;
+
+        window.speechSynthesis.speak(mensaje);
+        
+        const tiempoEstimado = texto.length * 100 + 2000; 
+        setTimeout(finalizar, tiempoEstimado);
+    } else if (callbackEnd) {
         setTimeout(callbackEnd, 3000);
     }
 }
@@ -208,23 +236,24 @@ function agregarRegistro(mensaje) {
 
 function mostrarReglas() {
     let expInput = document.getElementById('nivel-experiencia') ? document.getElementById('nivel-experiencia').value : 'principiante';
-    const esExp = (expInput === 'experimentado');
+    const esExp = (expInput === 'clasico' || expInput === 'experimentado');
     
-    let textoReglas = "Reglas del Viaje Azteca para " + (esExp ? "Experimentados. " : "Principiantes. ");
+    reproducirMusicaAzteca();
+    
     if (!esExp) {
-        textoReglas += "Regla 1. En tu primera vuelta completa solo avanzarás para conocer el tablero. " +
-                       "Regla 2. A partir de tu segunda vuelta, podrás comprar los estados en los que caigas. " +
-                       "Regla 3. Cada jugador comienza con diez mil pesos y el sistema administra el dinero. " +
-                       "Regla 4. Si caes en una propiedad ajena pagarás renta, y si te quedas sin dinero pierdes. " +
-                       "Regla 5. Tienes 10 segundos para jugar tu turno.";
+        let textoReglas = "¡Hola viajero! Seré tu guía en este Viaje Azteca. Aquí avanzarás con un dado comprando los estados que visites y cobrando rentas. " +
+                      "Todos inician con diez mil pesos. En tu primera vuelta solo avanzarás para conocer el juego. " +
+                      "A partir de tu segunda vuelta, ya podrás comprar los estados en los que caigas. " +
+                      "Si caes en una propiedad ajena, el sistema te cobrará la renta automáticamente. " +
+                      "Si te quedas sin dinero, pierdes. ¡Diviértete aprendiendo!";
+        hablarComoGuia(textoReglas);
     } else {
-        textoReglas += "Regla 1. Como ya saben jugar, la opción de compra se desbloquea en cuanto pasen la Meta y empiecen la segunda vuelta. " +
-                       "Regla 2. Todos comienzan con diez mil pesos y el sistema administra las rentas y pagos automáticamente. " +
-                       "Regla 3. El juego es dinámico: si se quedan sin dinero para una renta o multa, pierden. " +
-                       "Regla 4. Cuentan con 10 segundos de tiempo límite para tomar sus decisiones.";
+        let textoReglas = "Reglas de Viaje Azteca Clásico. " +
+                      "Comienzas con diez mil pesos. " +
+                      "¡Atención! Las compras se desbloquean en la segunda vuelta. " +
+                      "Cuidado con las rentas, ¡si te quedas sin dinero para pagar, estás fuera del juego!";
+        hablar(textoReglas, true);
     }
-        
-    hablar(textoReglas, true);
 }
 
 function tirarDado() {
@@ -235,31 +264,12 @@ function tirarDado() {
     const carasDado = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
     let d1 = Math.floor(Math.random() * 6) + 1;
     let avance = d1;
-    
-    // Forzar caída en especial si va a pasar la Meta y no ha caído (trampa del sistema para garantizar probabilidad)
-    if (j.turnosJugados > 2 && !j.cayoEnEspecial && j.posicion + avance >= casillas.length) {
-        let especialEncontrada = -1;
-        for (let i = j.posicion + 1; i < casillas.length; i++) {
-            if (casillas[i] === "Beneficio" || casillas[i] === "Cárcel") {
-                especialEncontrada = i;
-                break;
-            }
-        }
-        if (especialEncontrada !== -1) {
-            let dist = especialEncontrada - j.posicion;
-            if (dist <= 6) {
-                avance = dist;
-                d1 = dist;
-            }
-        }
-    }
 
     const nuevaPosicion = j.posicion + avance;
     let pasoMeta = false;
     if (nuevaPosicion >= casillas.length && j.turnosJugados > 1) {
         pasoMeta = true;
         j.vueltas++;
-        j.dinero += 2000;
         j.cayoEnEspecial = false; // Resetear bandera al pasar la meta
     }
     j.posicion = nuevaPosicion % casillas.length;
@@ -276,7 +286,7 @@ function tirarDado() {
     let mensaje = `Jugador ${j.id} tiró ${avance}. Avanza a ${nombreCasilla}`;
     if (zonaCasilla) mensaje += ` (${zonaCasilla})`;
     mensaje += `.`;
-    if (pasoMeta) mensaje += ` Pasó por la Meta y cobró $2000.`;
+    if (pasoMeta) mensaje += ` Completó una vuelta al tablero.`;
     
     let renta = 0;
     if (nombreCasilla === "Beneficio") {
@@ -312,7 +322,7 @@ function tirarDado() {
     let msgVoz = `Tiraste un ${d1}, avanzas ${avance} casillas y llegaste a ${nombreCasilla}`;
     if (zonaCasilla) msgVoz += `, en la ${zonaCasilla}. `;
     else msgVoz += `. `;
-    if (pasoMeta) msgVoz += `Pasaste por la Meta y el banco te ha pagado 2000 pesos. `;
+    if (pasoMeta) msgVoz += `Completaste una vuelta al tablero. `;
 
     if (nombreCasilla === "Beneficio") {
         reproducirSonido('beneficio');
@@ -483,51 +493,55 @@ function finalizarTurno() {
     actualizarInterfaz();
 }
 
+function reproducirMusicaAzteca() {
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioContext();
+        
+        function playDrum(time) {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(150, time);
+            osc.frequency.exponentialRampToValueAtTime(40, time + 0.1);
+            gain.gain.setValueAtTime(1, time);
+            gain.gain.exponentialRampToValueAtTime(0.01, time + 0.2);
+            osc.start(time);
+            osc.stop(time + 0.2);
+        }
+        
+        function playFlute(freq, time, duration) {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0, time);
+            gain.gain.linearRampToValueAtTime(0.3, time + 0.1);
+            gain.gain.setValueAtTime(0.3, time + duration - 0.1);
+            gain.gain.linearRampToValueAtTime(0, time + duration);
+            osc.start(time);
+            osc.stop(time + duration);
+        }
+        
+        const t = ctx.currentTime;
+        playDrum(t); playDrum(t + 0.4); playDrum(t + 0.8); playDrum(t + 1.2); playDrum(t + 1.6); playDrum(t + 2.0);
+        playFlute(659.25, t, 0.4); playFlute(783.99, t + 0.4, 0.4); playFlute(880.00, t + 0.8, 0.8); playFlute(783.99, t + 1.6, 0.4); playFlute(659.25, t + 2.0, 0.8);
+    } catch(e) {
+        console.log("Web Audio API no soportada", e);
+    }
+}
+
 let bienvenidaGeneralDicha = false;
 function reproducirMusicaAztecaYBienvenida() {
     if (bienvenidaGeneralDicha) return;
     bienvenidaGeneralDicha = true;
     
     hablar("Bienvenidos a Viaje Azteca.", true, () => {
-        try {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            const ctx = new AudioContext();
-            
-            function playDrum(time) {
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(150, time);
-                osc.frequency.exponentialRampToValueAtTime(40, time + 0.1);
-                gain.gain.setValueAtTime(1, time);
-                gain.gain.exponentialRampToValueAtTime(0.01, time + 0.2);
-                osc.start(time);
-                osc.stop(time + 0.2);
-            }
-            
-            function playFlute(freq, time, duration) {
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.type = 'sine';
-                osc.frequency.value = freq;
-                gain.gain.setValueAtTime(0, time);
-                gain.gain.linearRampToValueAtTime(0.3, time + 0.1);
-                gain.gain.setValueAtTime(0.3, time + duration - 0.1);
-                gain.gain.linearRampToValueAtTime(0, time + duration);
-                osc.start(time);
-                osc.stop(time + duration);
-            }
-            
-            const t = ctx.currentTime;
-            playDrum(t); playDrum(t + 0.4); playDrum(t + 0.8); playDrum(t + 1.2); playDrum(t + 1.6); playDrum(t + 2.0);
-            playFlute(659.25, t, 0.4); playFlute(783.99, t + 0.4, 0.4); playFlute(880.00, t + 0.8, 0.8); playFlute(783.99, t + 1.6, 0.4); playFlute(659.25, t + 2.0, 0.8);
-        } catch(e) {
-            console.log("Web Audio API no soportada", e);
-        }
+        reproducirMusicaAzteca();
     });
 }
 document.addEventListener('click', reproducirMusicaAztecaYBienvenida, {once: true});
