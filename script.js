@@ -1,8 +1,8 @@
 // script.js
 (() => { // Encapsulamiento IIFE para evitar trampas desde la consola
 const estadosRepublica = [
-    // NORTE (10 casillas)
-    "Beneficio", "Baja California", "Baja California Sur", "Sonora", "Chihuahua", "Beneficio", "Coahuila", "Nuevo León", "Tamaulipas", "Durango",
+    // NORTE (9 casillas)
+    "Baja California", "Baja California Sur", "Sonora", "Chihuahua", "Coahuila", "Nuevo León", "Tamaulipas", "Durango", "Cárcel",
     // OESTE (10 casillas)
     "Sinaloa", "Beneficio", "Nayarit", "Jalisco", "Colima", "Cárcel", "Michoacán", "Aguascalientes", "Guanajuato", "Zacatecas",
     // CENTRO/ESTE (11 casillas)
@@ -14,10 +14,10 @@ const estadosRepublica = [
 // Función para determinar la zona según el índice en 'casillas'
 function obtenerZona(index) {
     if (index === 0) return "";
-    if (index >= 1 && index <= 10) return "Zona Norte";
-    if (index >= 11 && index <= 20) return "Zona Oeste";
-    if (index >= 21 && index <= 31) return "Zona Centro-Este";
-    if (index >= 32 && index <= 42) return "Zona Sur";
+    if (index >= 1 && index <= 9) return "Zona Norte";
+    if (index >= 10 && index <= 19) return "Zona Oeste";
+    if (index >= 20 && index <= 30) return "Zona Centro-Este";
+    if (index >= 31 && index <= 41) return "Zona Sur";
     return "";
 }
 
